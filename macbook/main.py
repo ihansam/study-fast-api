@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 
 from macbook import macbook_db, MacBook
 
-app = FastAPI(title="Macbook DB API", version="0.0.1")
+app = FastAPI(title="Macbook Spec API", version="0.0.1")
 
 
 @app.get("/")
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     import uvicorn
     import json
 
-    with open("config.json") as cf:
+    with open("api_config.json") as cf:
         cfg: dict = json.load(cf)
 
     uvicorn.run(app,

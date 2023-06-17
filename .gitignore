@@ -1,7 +1,11 @@
+# directories
 **/.DS_Store
-
 .idea
 */.idea
 **/__pycache__
+**/temp
 
-*/config.json
+# config files
+**/config.json
+**/db_config.json
+**/api_config.json

@@ -1,0 +1,8 @@
+{
+  "host": "host-ip-address",
+  "port": "dbms-port",
+  "user": "user-name",
+  "password": "user-password",
+  "database": "mac",
+  "charset": "utf8"
+}
