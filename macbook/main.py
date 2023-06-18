@@ -1,53 +1,68 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
+from sqlalchemy.orm import Session
 
-from macbook import macbook_db, MacBook
+from database.db import get_db
+from database.entities import MacBookSpec
+from database.models import MacBookSpecCreate
 
-app = FastAPI(title="Macbook Spec API", version="0.0.1")
+app = FastAPI(title="Macbook Spec API", version="0.0.2")
 
 
 @app.get("/")
 async def root():
-    return "Hello! go to /docs for using API"
+    return "Hello! go to /docs to see how to use MacBook Spec API!"
 
 
 @app.get("/macbook")
-async def get_all_macbook():
-    return macbook_db
+async def get_all_macbook(db: Session = Depends(get_db)):
+    macbook_list = db.query(MacBookSpec).all()
+    return macbook_list
 
 
-@app.get("/macbook/{name}")
-async def find_macbook_by_name(name):
-    for mb in macbook_db:
-        if mb.get("name") == name:
-            return mb
-
-    raise HTTPException(status_code=404, detail=f"{name} not found")
+@app.get("/macbook/{pname}")
+async def find_macbook_by_name(pname, db: Session = Depends(get_db)):
+    macbook = db.query(MacBookSpec).filter(MacBookSpec.pname == pname).first()
+    if macbook is None:
+        raise HTTPException(status_code=404, detail=f"{pname} not found")
+    return macbook
 
 
 @app.post("/macbook")
-async def create_new_macbook(macbook: MacBook):
-    macbook_db.append(macbook.dict())
-    return {"message": "MacBook created successfully"}
+async def create_new_macbook(macbook: MacBookSpecCreate, db: Session = Depends(get_db)):
+    _macbook = MacBookSpec(**macbook.dict())
+    db.add(_macbook)
+    db.commit()
+    db.refresh(_macbook)
+    return _macbook
 
 
-@app.put("/macbook/{name}")
-async def update_macbook(name: str, updated_mb: MacBook):
-    for mb in macbook_db:
-        if mb.get("name") == name:
-            mb.update(updated_mb.dict())
-            return {"message": f"{name} updated successfully"}
+@app.put("/macbook/{pname}")
+async def update_macbook(pname, updated_mb: MacBookSpecCreate,
+                         db: Session = Depends(get_db)):
+    _macbook = db.query(MacBookSpec).filter(MacBookSpec.pname == pname).first()
 
-    raise HTTPException(status_code=404, detail=f"{name} not found")
+    if _macbook is None:
+        raise HTTPException(status_code=404, detail=f"{pname} not found")
+
+    for key, val in updated_mb.dict(exclude_unset=True).items():
+        setattr(_macbook, key, val)
+
+    db.commit()
+    db.refresh(_macbook)
+    return _macbook
 
 
-@app.delete("macbook/{name}")
-async def delete_macbook(name: str):
-    for idx, mb in enumerate(macbook_db):
-        if mb.get("name") == name:
-            macbook_db.pop(idx)
-            return {"message": f"{name} deleted successfully"}
+@app.delete("/macbook/{pname}")
+async def delete_macbook(pname, db: Session = Depends(get_db)):
+    _macbook = db.query(MacBookSpec).filter(MacBookSpec.pname == pname).first()
 
-    raise HTTPException(status_code=404, detail=f"{name} not found")
+    if _macbook is None:
+        raise HTTPException(status_code=404, detail=f"{pname} not found")
+
+    db.delete(_macbook)
+    db.commit()
+
+    return {"message": f"{pname} deleted successfully"}
 
 
 if __name__ == '__main__':

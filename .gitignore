@@ -9,3 +9,6 @@
 **/config.json
 **/db_config.json
 **/api_config.json
+
+# environment files
+**/.env
