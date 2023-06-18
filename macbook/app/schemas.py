@@ -6,10 +6,3 @@ class MacBookSpecCreate(BaseModel):
     processor: str
     display: float
     unpack: int
-
-
-class MacBookSpecResponse(BaseModel):
-    pname: str
-    processor: str
-    display: float
-    unpack: int

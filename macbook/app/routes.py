@@ -1,25 +1,25 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from database.db import get_db
-from database.entities import MacBookSpec
-from database.models import MacBookSpecCreate
+from app.models import MacBookSpec
+from app.schemas import MacBookSpecCreate
 
-app = FastAPI(title="Macbook Spec API", version="0.0.2")
+macbook_router = APIRouter()
 
 
-@app.get("/")
+@macbook_router.get("/")
 async def root():
     return "Hello! go to /docs to see how to use MacBook Spec API!"
 
 
-@app.get("/macbook")
+@macbook_router.get("/macbook")
 async def get_all_macbook(db: Session = Depends(get_db)):
     macbook_list = db.query(MacBookSpec).all()
     return macbook_list
 
 
-@app.get("/macbook/{pname}")
+@macbook_router.get("/macbook/{pname}")
 async def find_macbook_by_name(pname, db: Session = Depends(get_db)):
     macbook = db.query(MacBookSpec).filter(MacBookSpec.pname == pname).first()
     if macbook is None:
@@ -27,7 +27,7 @@ async def find_macbook_by_name(pname, db: Session = Depends(get_db)):
     return macbook
 
 
-@app.post("/macbook")
+@macbook_router.post("/macbook")
 async def create_new_macbook(macbook: MacBookSpecCreate, db: Session = Depends(get_db)):
     _macbook = MacBookSpec(**macbook.dict())
     db.add(_macbook)
@@ -36,7 +36,7 @@ async def create_new_macbook(macbook: MacBookSpecCreate, db: Session = Depends(g
     return _macbook
 
 
-@app.put("/macbook/{pname}")
+@macbook_router.put("/macbook/{pname}")
 async def update_macbook(pname, updated_mb: MacBookSpecCreate,
                          db: Session = Depends(get_db)):
     _macbook = db.query(MacBookSpec).filter(MacBookSpec.pname == pname).first()
@@ -52,7 +52,7 @@ async def update_macbook(pname, updated_mb: MacBookSpecCreate,
     return _macbook
 
 
-@app.delete("/macbook/{pname}")
+@macbook_router.delete("/macbook/{pname}")
 async def delete_macbook(pname, db: Session = Depends(get_db)):
     _macbook = db.query(MacBookSpec).filter(MacBookSpec.pname == pname).first()
 
@@ -63,15 +63,3 @@ async def delete_macbook(pname, db: Session = Depends(get_db)):
     db.commit()
 
     return {"message": f"{pname} deleted successfully"}
-
-
-if __name__ == '__main__':
-    import uvicorn
-    import json
-
-    with open("api_config.json") as cf:
-        cfg: dict = json.load(cf)
-
-    uvicorn.run(app,
-                host=cfg.get('host', "localhost"),
-                port=int(cfg.get('port', '8000')))
